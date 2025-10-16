@@ -56,7 +56,7 @@
         <!-- Header -->
         <header class="text-center mb-10">
             <h1 class="text-5xl font-extrabold text-gray-900 leading-tight">JobReady.<span class="text-emerald-500">ID</span></h1>
-            <p class="text-xl text-gray-500 mt-3 font-light">Perbaiki CV Anda Dengan Kami</p>
+            <p class="text-xl text-gray-500 mt-3 font-light">Perbaiki CV Anda Dengan Kami.</p>
         </header>
 
         <!-- Main Content Grid -->
@@ -146,157 +146,50 @@
         const buttonText = document.getElementById('buttonText');
         const loadingSpinner = document.getElementById('loadingSpinner');
 
-        // --- Utility Functions ---
+        // --- Gemini API Configuration ---
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        // --- Helper Function for UI/UX ---
 
         /**
-         * Cleans and tokenizes text for keyword analysis.
+         * Helper for feedback card style
          */
-        const cleanText = (text) => {
-            return text.toLowerCase()
-                       .replace(/[^a-z0-9\s]/g, ' ') // Replace punctuation/symbols with space
-                       .split(/\s+/) // Split by whitespace
-                       .filter(word => word.length > 2 && !isStopWord(word)); // Filter short words and stop words
-        };
-
-        /**
-         * Simple Indonesian stop word checker (simplified list).
-         */
-        const isStopWord = (word) => {
-            const stopWords = new Set(['yang', 'dan', 'di', 'ke', 'dari', 'untuk', 'dengan', 'saya', 'kami', 'itu', 'ini', 'adalah', 'sebagai', 'atau', 'pada', 'dalam', 'mereka', 'akan', 'telah']);
-            return stopWords.has(word);
-        };
-
-        /**
-         * Extracts high-value keywords (nouns/verbs) from JD.
-         */
-        const extractKeywords = (jdText) => {
-            const cleanedTokens = cleanText(jdText);
-            // In a real app, this would use an NLP model. Here we filter by word length (>= 5) for relevance.
-            const keywords = cleanedTokens.filter(word => word.length >= 5);
-            // Use a Set to ensure unique keywords
-            return Array.from(new Set(keywords)).slice(0, 20); // Limit to top 20 unique keywords
-        };
-
-        // --- Core Logic Functions ---
-
-        /**
-         * Calculates the match score based on keyword presence.
-         */
-        const calculateMatchScore = (cvText, jdText) => {
-            if (!cvText || !jdText) return 0;
-
-            const targetKeywords = extractKeywords(jdText);
-            const cvTokens = cleanText(cvText);
-
-            let matchedCount = 0;
-            const cvSet = new Set(cvTokens);
-
-            targetKeywords.forEach(keyword => {
-                // Check for exact match
-                if (cvSet.has(keyword)) {
-                    matchedCount++;
-                }
-            });
-
-            if (targetKeywords.length === 0) return 0;
-
-            // Score is based on the percentage of target keywords found in the CV.
-            let score = Math.round((matchedCount / targetKeywords.length) * 100);
-            
-            // Add bonus if the CV uses strong action verbs related to the role (Quantifiable Results)
-            const strongActionVerbs = ['meningkatkan', 'mengoptimalkan', 'mencapai', 'mengurangi', 'memimpin', 'merumuskan'];
-            let bonus = strongActionVerbs.some(verb => cvText.toLowerCase().includes(verb)) ? 10 : 0;
-            
-            return Math.min(100, score + bonus);
-        };
-
-        /**
-         * Simulates AI Feedback and optimization suggestions with better formatting.
-         */
-        const simulateAIOptimization = (cvText, jdText, score) => {
-            const targetKeywords = extractKeywords(jdText);
-            const cvTokens = cleanText(cvText);
-            const cvSet = new Set(cvTokens);
-
-            let feedbackHTML = '';
-
-            // Helper for feedback card style
-            const createFeedbackCard = (icon, title, content, bgColor, borderColor, textColor) => {
-                return `
-                    <div class="p-4 rounded-lg border-l-4 ${borderColor} ${bgColor} shadow-md">
-                        <p class="font-bold ${textColor} flex items-center">${icon} ${title}</p>
-                        <p class="mt-1 text-gray-700 text-sm">${content}</p>
-                    </div>
-                `;
-            };
-
-            // 1. Identify Missing Keywords
-            const missingKeywords = targetKeywords.filter(keyword => !cvSet.has(keyword)).slice(0, 3);
-            if (missingKeywords.length > 0) {
-                feedbackHTML += createFeedbackCard(
-                    '⚠️',
-                    'Keyword Kunci Hilang (ATS Barrier)',
-                    `CV Anda belum mencantumkan keyword kunci yang dicari sistem: **${missingKeywords.join(', ')}** (dari JD Lowongan). Tambahkan kata-kata tersebut pada bagian pengalaman atau skill.`,
-                    'bg-red-50',
-                    'border-red-500',
-                    'text-red-700'
-                );
+        const createFeedbackCard = (icon, title, content, type) => {
+            let bgColor, borderColor, textColor;
+            if (type === 'error') {
+                bgColor = 'bg-red-50';
+                borderColor = 'border-red-500';
+                textColor = 'text-red-700';
+            } else if (type === 'warning') {
+                bgColor = 'bg-yellow-50';
+                borderColor = 'border-yellow-500';
+                textColor = 'text-yellow-700';
+            } else if (type === 'success') {
+                bgColor = 'bg-green-50';
+                borderColor = 'border-green-500';
+                textColor = 'text-green-700';
+            } else { // info
+                bgColor = 'bg-blue-50';
+                borderColor = 'border-blue-500';
+                textColor = 'text-blue-700';
             }
 
-            // 2. Action Verb & Metrik Feedback (Core CV Problem)
-            if (!cvText.toLowerCase().includes('meningkatkan') && !cvText.toLowerCase().includes('mencapai')) {
-                feedbackHTML += createFeedbackCard(
-                    '🌟',
-                    'Perbaikan Kuantitatif (HR Magnet)',
-                    `Deskripsi pengalaman Anda terlalu pasif ("Bertanggung jawab..."). Ubah menjadi narasi berbasis hasil: <span class="bg-blue-100 p-1 rounded font-mono">"Mencapai akurasi laporan hingga 99.5%, *meningkatkan* efisiensi tim sebesar 20%."</span> Gunakan angka!`,
-                    'bg-yellow-50',
-                    'border-yellow-500',
-                    'text-yellow-700'
-                );
-            }
-
-            // 3. Score-based Encouragement/Summary
-            if (score >= 85) {
-                feedbackHTML += createFeedbackCard(
-                    '🚀',
-                    'Kesimpulan: Siap Kirim!',
-                    `CV Anda memiliki relevansi tinggi (${score}%). Anda sudah menonjolkan: **${targetKeywords.slice(0, 4).join(', ')}**. Fokus pada visual CV Anda (Export Template).`,
-                    'bg-green-50',
-                    'border-green-500',
-                    'text-green-700'
-                );
-            } else if (score >= 50 && score < 85) {
-                feedbackHTML += createFeedbackCard(
-                    '📈',
-                    'Langkah Berikutnya',
-                    `Score Anda cukup baik. Prioritaskan memasukkan keyword yang hilang dan tambahkan minimal dua klaim berbasis metrik (angka) di bagian pengalaman Anda untuk mendapatkan bonus skor 10%.`,
-                    'bg-blue-50',
-                    'border-blue-500',
-                    'text-blue-700'
-                );
-            } else {
-                 feedbackHTML += createFeedbackCard(
-                    '📉',
-                    'Perombakan Mayor Diperlukan',
-                    `Score rendah (${score}%). CV Anda TIDAK akan lolos ATS. Anda harus menyalin dan mengadaptasi bahasa yang digunakan dalam Deskripsi Lowongan.`,
-                    'bg-red-50',
-                    'border-red-500',
-                    'text-red-700'
-                );
-            }
-
-            return feedbackHTML || createFeedbackCard('ℹ️', 'Analisis Selesai', 'Tidak ada feedback spesifik yang ditemukan, CV Anda sudah optimal untuk keyword yang ada.', 'bg-gray-50', 'border-gray-400', 'text-gray-600');
+            return `
+                <div class="p-4 rounded-lg border-l-4 ${borderColor} ${bgColor} shadow-md">
+                    <p class="font-bold ${textColor} flex items-center">${icon} ${title}</p>
+                    <p class="mt-1 text-gray-700 text-sm">${content}</p>
+                </div>
+            `;
         };
-
-        /**
-         * Main analysis function, simulating API call delay.
-         */
-        const analyzeCV = () => {
+        
+        // --- Core Analysis Function using Gemini API ---
+        
+        const analyzeCV = async () => {
             const cvText = cvInput.value.trim();
             const jdText = jdInput.value.trim();
 
             if (!cvText || !jdText) {
-                // Using console log instead of alert for better UX
                 console.error('Harap masukkan konten CV dan Deskripsi Lowongan.');
                 return;
             }
@@ -307,54 +200,132 @@
             loadingSpinner.classList.remove('hidden');
             resultSection.classList.add('hidden');
             aiFeedback.innerHTML = '';
+
+            const systemPrompt = `Anda adalah Analis CV Ahli (ATS Optimizer) yang membantu fresh graduate Indonesia. Tugas Anda adalah membandingkan konten CV dengan deskripsi lowongan kerja (JD) dan memberikan skor kecocokan serta umpan balik yang sangat spesifik dan dapat ditindaklanjuti. Jawablah hanya dalam format JSON yang telah ditentukan. Gunakan Bahasa Indonesia.`;
             
-            // Simulate API processing delay (2 seconds)
-            setTimeout(() => {
-                try {
-                    const score = calculateMatchScore(cvText, jdText);
-                    const feedback = simulateAIOptimization(cvText, jdText, score);
+            const userQuery = `Analisis CV berikut terhadap Deskripsi Lowongan:
 
-                    // Update UI with results
+            --- CV PENGGUNA ---
+            ${cvText}
+
+            --- DESKRIPSI LOWONGAN (JD) ---
+            ${jdText}
+            `;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "score": {
+                                "type": "INTEGER",
+                                "description": "Skor kecocokan CV terhadap JD, dalam persentase (0-100). Fokus pada keyword teknis dan action verbs."
+                            },
+                            "summary": {
+                                "type": "STRING",
+                                "description": "Satu kalimat ringkasan profesional tentang tingkat kecocokan CV."
+                            },
+                            "feedback": {
+                                "type": "ARRAY",
+                                "description": "Daftar umpan balik yang dapat ditindaklanjuti. Harus mencakup minimal 3 poin saran.",
+                                "items": {
+                                    "type": "OBJECT",
+                                    "properties": {
+                                        "type": {
+                                            "type": "STRING",
+                                            "description": "Kategori umpan balik: 'error' (Kritikal/ATS), 'warning' (Perbaikan Kualitas), 'success' (Pujian/Sudah Baik), 'info' (Saran Umum)."
+                                        },
+                                        "title": {
+                                            "type": "STRING",
+                                            "description": "Judul singkat untuk saran (misalnya: Keyword Hilang, Kuantifikasi Pengalaman)."
+                                        },
+                                        "content": {
+                                            "type": "STRING",
+                                            "description": "Isi saran spesifik dan mudah dipahami, dalam Bahasa Indonesia."
+                                        }
+                                    },
+                                    "propertyOrdering": ["type", "title", "content"]
+                                }
+                            }
+                        },
+                        "propertyOrdering": ["score", "summary", "feedback"]
+                    }
+                },
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    const parsedData = JSON.parse(jsonString);
+
+                    const { score, summary, feedback } = parsedData;
+
+                    // --- Update UI with AI Results ---
                     resultSection.classList.remove('hidden');
-
-                    // Score Display
+                    
+                    // 1. Score Display
                     matchScoreDisplay.textContent = `${score}%`;
                     scoreBar.style.width = `${score}%`;
-                    scoreBar.classList.add('transition-all', 'duration-1000'); // Ensure transition applies
+                    scoreBar.classList.add('transition-all', 'duration-1000'); 
 
-                    
+                    scoreMessage.textContent = summary;
+
                     if (score >= 85) {
-                        scoreBar.style.backgroundColor = 'var(--color-primary)'; // Green
-                        scoreMessage.textContent = 'Luar Biasa! CV Anda sangat relevan dan siap lolos saringan ATS.';
+                        scoreBar.style.backgroundColor = 'var(--color-primary)'; 
                     } else if (score >= 50) {
-                        scoreBar.style.backgroundColor = 'var(--color-secondary)'; // Blue
-                        scoreMessage.textContent = 'Cukup bagus! Hanya perlu penyesuaian keyword agar lebih kompetitif. Lihat rekomendasi di bawah.';
+                        scoreBar.style.backgroundColor = 'var(--color-secondary)'; 
                     } else {
                         scoreBar.style.backgroundColor = '#EF4444'; // Red
-                        scoreMessage.textContent = 'Waspada! Score di bawah rata-rata. Anda harus segera merevisi CV agar lolos saringan awal.';
                     }
                     
-                    // Feedback Display
-                    aiFeedback.innerHTML = feedback;
+                    // 2. Feedback Display
+                    let feedbackHTML = '';
+                    feedback.forEach(item => {
+                        let icon = '';
+                        if (item.type === 'error') icon = '🚨';
+                        else if (item.type === 'warning') icon = '⚠️';
+                        else if (item.type === 'success') icon = '✨';
+                        else icon = '💡';
+                        
+                        feedbackHTML += createFeedbackCard(icon, item.title, item.content, item.type);
+                    });
+                    
+                    aiFeedback.innerHTML = feedbackHTML;
 
-                } catch (error) {
-                    console.error('Analysis Error:', error);
-                    resultSection.classList.remove('hidden');
-                    aiFeedback.innerHTML = createFeedbackCard('❌', 'Error Analisis', 'Terjadi kesalahan saat menganalisis. Pastikan format teks yang dimasukkan benar.', 'bg-red-50', 'border-red-500', 'text-red-700');
-                } finally {
-                    // Reset loading state
-                    analyzeButton.disabled = false;
-                    buttonText.classList.remove('hidden');
-                    loadingSpinner.classList.add('hidden');
+                } else {
+                    aiFeedback.innerHTML = createFeedbackCard('❌', 'Respons Kosong', 'AI gagal memberikan respons. Coba format CV dan JD Anda lebih sederhana.', 'error');
                 }
-            }, 2000);
+
+            } catch (error) {
+                console.error('Error during API call or parsing:', error);
+                resultSection.classList.remove('hidden');
+                aiFeedback.innerHTML = createFeedbackCard('❌', 'Error Jaringan/Server', 'Terjadi kesalahan saat menghubungi server AI. Coba lagi.', 'error');
+            } finally {
+                // Reset loading state
+                analyzeButton.disabled = false;
+                buttonText.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+            }
         };
         
-        // --- Mock Data and Initialization ---
+        // --- Mock Data and Initialization (Unchanged) ---
 
         const loadMockData = () => {
             cvInput.value = `
-            Nama: Budi Santoso
+            Nama: Sukuna
             Pendidikan: S1 Teknik Informatika, Universitas A (Lulus 2024)
             Pengalaman: 
             Magang di TechCorp (6 bulan). Saya bertanggung jawab atas laporan data harian dan membantu tim dalam pekerjaan.
