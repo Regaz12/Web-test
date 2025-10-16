@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobReady.ID - Smart CV Matcher</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #059669; /* Emerald 600 */
+            --color-secondary: #2563EB; /* Blue 600 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .score-bar {
+            height: 1.5rem;
+            transition: width 1s ease-in-out;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
+        /* Custom scrollbar style for textareas */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #9ca3af; /* Gray 400 */
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background-color: #f9fafb;
+        }
+        /* Custom spinner for better loading visualization */
+        .loader {
+            border-top-color: var(--color-primary);
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @-webkit-keyframes spinner {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="app" class="max-w-5xl mx-auto bg-white shadow-2xl rounded-3xl p-6 md:p-12 border-t-8 border-emerald-500/80">
+
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-5xl font-extrabold text-gray-900 leading-tight">JobReady.<span class="text-emerald-500">ID</span></h1>
+            <p class="text-xl text-gray-500 mt-3 font-light">Perbaiki CV Anda Dengan Kami</p>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- CV Input Section -->
+            <div class="input-card bg-gray-50 p-6 rounded-xl shadow-lg border border-gray-200">
+                <h2 class="text-xl font-bold mb-4 text-gray-700 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    1. Konten CV Anda
+                </h2>
+                <textarea id="cvInput" rows="12" class="w-full p-4 border-2 border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-inner" placeholder="Tempelkan seluruh teks CV Anda di sini."></textarea>
+                <button onclick="loadMockData()" class="mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium transition duration-150">Gunakan Contoh Fresh Graduate</button>
+            </div>
+
+            <!-- Job Description Input Section -->
+            <div class="input-card bg-gray-50 p-6 rounded-xl shadow-lg border border-gray-200">
+                <h2 class="text-xl font-bold mb-4 text-gray-700 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 4v12l4-2.5 4 2.5V4m-4 0h-4m4 0h4m-4 4h-4m4 0h4m-4 4h-4m4 0h4"></path></svg>
+                    2. Deskripsi Lowongan (JD)
+                </h2>
+                <textarea id="jdInput" rows="12" class="w-full p-4 border-2 border-emerald-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-base resize-none shadow-inner" placeholder="Tempelkan Deskripsi Lowongan (JD) yang Anda targetkan."></textarea>
+                <button onclick="loadMockJD()" class="mt-3 text-sm text-emerald-600 hover:text-emerald-800 font-medium transition duration-150">Gunakan Contoh Lowongan (Data Analyst)</button>
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="text-center my-12">
+            <button id="analyzeButton" onclick="analyzeCV()" class="group relative px-10 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black rounded-full text-xl shadow-xl hover:shadow-2xl hover:from-emerald-600 hover:to-teal-600 transition duration-300 transform hover:scale-[1.02] active:scale-95 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed" disabled>
+                <span id="buttonText">Analisis & Optimalkan CV!</span>
+                <!-- Modern Spinner SVG -->
+                <svg id="loadingSpinner" class="hidden loader animate-spin w-6 h-6 mx-auto text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Result Section -->
+        <div id="resultSection" class="bg-white p-6 md:p-8 rounded-2xl border-2 border-blue-100 shadow-2xl hidden">
+            
+            <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">✅ Hasil Analisis JobReady.ID</h2>
+            
+            <!-- Job Match Score -->
+            <div class="mb-10 text-center">
+                <p class="text-2xl font-semibold mb-3 text-blue-600">Job Match Score</p>
+                <div class="inline-block p-4 bg-blue-50 rounded-full shadow-inner border-4 border-blue-200">
+                    <span id="matchScoreDisplay" class="text-6xl font-black text-blue-700">0%</span>
+                </div>
+                
+                <p id="scoreMessage" class="mt-4 text-lg font-medium italic text-gray-600 max-w-lg mx-auto"></p>
+                
+                <div class="w-full bg-gray-200 rounded-full overflow-hidden mt-6">
+                    <div id="scoreBar" class="score-bar h-3.5" style="width: 0%;"></div>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">Tingkat kecocokan keyword CV Anda terhadap target lowongan.</p>
+            </div>
+
+            <!-- AI Feedback & Optimization -->
+            <div>
+                <h3 class="text-2xl font-bold mb-4 text-emerald-700 flex items-center border-b pb-2">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M3.636 5.636l.707.707M12 20.75V19m-.75-7.5h1.5m-7.5 3.75H5.636M18.364 15H17.25"></path></svg>
+                    💬 Rekomendasi AI Feedback (Actionable Steps)
+                </h3>
+                <div id="aiFeedback" class="space-y-4 pt-2">
+                    <!-- Feedback will be inserted here -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer for context -->
+        <footer class="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-400">
+            JobReady.ID - Anjay.
+        </footer>
+    </div>
+
+    <script>
+        const cvInput = document.getElementById('cvInput');
+        const jdInput = document.getElementById('jdInput');
+        const analyzeButton = document.getElementById('analyzeButton');
+        const resultSection = document.getElementById('resultSection');
+        const scoreBar = document.getElementById('scoreBar');
+        const matchScoreDisplay = document.getElementById('matchScoreDisplay');
+        const scoreMessage = document.getElementById('scoreMessage');
+        const aiFeedback = document.getElementById('aiFeedback');
+        const buttonText = document.getElementById('buttonText');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+
+        // --- Utility Functions ---
+
+        /**
+         * Cleans and tokenizes text for keyword analysis.
+         */
+        const cleanText = (text) => {
+            return text.toLowerCase()
+                       .replace(/[^a-z0-9\s]/g, ' ') // Replace punctuation/symbols with space
+                       .split(/\s+/) // Split by whitespace
+                       .filter(word => word.length > 2 && !isStopWord(word)); // Filter short words and stop words
+        };
+
+        /**
+         * Simple Indonesian stop word checker (simplified list).
+         */
+        const isStopWord = (word) => {
+            const stopWords = new Set(['yang', 'dan', 'di', 'ke', 'dari', 'untuk', 'dengan', 'saya', 'kami', 'itu', 'ini', 'adalah', 'sebagai', 'atau', 'pada', 'dalam', 'mereka', 'akan', 'telah']);
+            return stopWords.has(word);
+        };
+
+        /**
+         * Extracts high-value keywords (nouns/verbs) from JD.
+         */
+        const extractKeywords = (jdText) => {
+            const cleanedTokens = cleanText(jdText);
+            // In a real app, this would use an NLP model. Here we filter by word length (>= 5) for relevance.
+            const keywords = cleanedTokens.filter(word => word.length >= 5);
+            // Use a Set to ensure unique keywords
+            return Array.from(new Set(keywords)).slice(0, 20); // Limit to top 20 unique keywords
+        };
+
+        // --- Core Logic Functions ---
+
+        /**
+         * Calculates the match score based on keyword presence.
+         */
+        const calculateMatchScore = (cvText, jdText) => {
+            if (!cvText || !jdText) return 0;
+
+            const targetKeywords = extractKeywords(jdText);
+            const cvTokens = cleanText(cvText);
+
+            let matchedCount = 0;
+            const cvSet = new Set(cvTokens);
+
+            targetKeywords.forEach(keyword => {
+                // Check for exact match
+                if (cvSet.has(keyword)) {
+                    matchedCount++;
+                }
+            });
+
+            if (targetKeywords.length === 0) return 0;
+
+            // Score is based on the percentage of target keywords found in the CV.
+            let score = Math.round((matchedCount / targetKeywords.length) * 100);
+            
+            // Add bonus if the CV uses strong action verbs related to the role (Quantifiable Results)
+            const strongActionVerbs = ['meningkatkan', 'mengoptimalkan', 'mencapai', 'mengurangi', 'memimpin', 'merumuskan'];
+            let bonus = strongActionVerbs.some(verb => cvText.toLowerCase().includes(verb)) ? 10 : 0;
+            
+            return Math.min(100, score + bonus);
+        };
+
+        /**
+         * Simulates AI Feedback and optimization suggestions with better formatting.
+         */
+        const simulateAIOptimization = (cvText, jdText, score) => {
+            const targetKeywords = extractKeywords(jdText);
+            const cvTokens = cleanText(cvText);
+            const cvSet = new Set(cvTokens);
+
+            let feedbackHTML = '';
+
+            // Helper for feedback card style
+            const createFeedbackCard = (icon, title, content, bgColor, borderColor, textColor) => {
+                return `
+                    <div class="p-4 rounded-lg border-l-4 ${borderColor} ${bgColor} shadow-md">
+                        <p class="font-bold ${textColor} flex items-center">${icon} ${title}</p>
+                        <p class="mt-1 text-gray-700 text-sm">${content}</p>
+                    </div>
+                `;
+            };
+
+            // 1. Identify Missing Keywords
+            const missingKeywords = targetKeywords.filter(keyword => !cvSet.has(keyword)).slice(0, 3);
+            if (missingKeywords.length > 0) {
+                feedbackHTML += createFeedbackCard(
+                    '⚠️',
+                    'Keyword Kunci Hilang (ATS Barrier)',
+                    `CV Anda belum mencantumkan keyword kunci yang dicari sistem: **${missingKeywords.join(', ')}** (dari JD Lowongan). Tambahkan kata-kata tersebut pada bagian pengalaman atau skill.`,
+                    'bg-red-50',
+                    'border-red-500',
+                    'text-red-700'
+                );
+            }
+
+            // 2. Action Verb & Metrik Feedback (Core CV Problem)
+            if (!cvText.toLowerCase().includes('meningkatkan') && !cvText.toLowerCase().includes('mencapai')) {
+                feedbackHTML += createFeedbackCard(
+                    '🌟',
+                    'Perbaikan Kuantitatif (HR Magnet)',
+                    `Deskripsi pengalaman Anda terlalu pasif ("Bertanggung jawab..."). Ubah menjadi narasi berbasis hasil: <span class="bg-blue-100 p-1 rounded font-mono">"Mencapai akurasi laporan hingga 99.5%, *meningkatkan* efisiensi tim sebesar 20%."</span> Gunakan angka!`,
+                    'bg-yellow-50',
+                    'border-yellow-500',
+                    'text-yellow-700'
+                );
+            }
+
+            // 3. Score-based Encouragement/Summary
+            if (score >= 85) {
+                feedbackHTML += createFeedbackCard(
+                    '🚀',
+                    'Kesimpulan: Siap Kirim!',
+                    `CV Anda memiliki relevansi tinggi (${score}%). Anda sudah menonjolkan: **${targetKeywords.slice(0, 4).join(', ')}**. Fokus pada visual CV Anda (Export Template).`,
+                    'bg-green-50',
+                    'border-green-500',
+                    'text-green-700'
+                );
+            } else if (score >= 50 && score < 85) {
+                feedbackHTML += createFeedbackCard(
+                    '📈',
+                    'Langkah Berikutnya',
+                    `Score Anda cukup baik. Prioritaskan memasukkan keyword yang hilang dan tambahkan minimal dua klaim berbasis metrik (angka) di bagian pengalaman Anda untuk mendapatkan bonus skor 10%.`,
+                    'bg-blue-50',
+                    'border-blue-500',
+                    'text-blue-700'
+                );
+            } else {
+                 feedbackHTML += createFeedbackCard(
+                    '📉',
+                    'Perombakan Mayor Diperlukan',
+                    `Score rendah (${score}%). CV Anda TIDAK akan lolos ATS. Anda harus menyalin dan mengadaptasi bahasa yang digunakan dalam Deskripsi Lowongan.`,
+                    'bg-red-50',
+                    'border-red-500',
+                    'text-red-700'
+                );
+            }
+
+            return feedbackHTML || createFeedbackCard('ℹ️', 'Analisis Selesai', 'Tidak ada feedback spesifik yang ditemukan, CV Anda sudah optimal untuk keyword yang ada.', 'bg-gray-50', 'border-gray-400', 'text-gray-600');
+        };
+
+        /**
+         * Main analysis function, simulating API call delay.
+         */
+        const analyzeCV = () => {
+            const cvText = cvInput.value.trim();
+            const jdText = jdInput.value.trim();
+
+            if (!cvText || !jdText) {
+                // Using console log instead of alert for better UX
+                console.error('Harap masukkan konten CV dan Deskripsi Lowongan.');
+                return;
+            }
+
+            // Show loading state
+            analyzeButton.disabled = true;
+            buttonText.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+            resultSection.classList.add('hidden');
+            aiFeedback.innerHTML = '';
+            
+            // Simulate API processing delay (2 seconds)
+            setTimeout(() => {
+                try {
+                    const score = calculateMatchScore(cvText, jdText);
+                    const feedback = simulateAIOptimization(cvText, jdText, score);
+
+                    // Update UI with results
+                    resultSection.classList.remove('hidden');
+
+                    // Score Display
+                    matchScoreDisplay.textContent = `${score}%`;
+                    scoreBar.style.width = `${score}%`;
+                    scoreBar.classList.add('transition-all', 'duration-1000'); // Ensure transition applies
+
+                    
+                    if (score >= 85) {
+                        scoreBar.style.backgroundColor = 'var(--color-primary)'; // Green
+                        scoreMessage.textContent = 'Luar Biasa! CV Anda sangat relevan dan siap lolos saringan ATS.';
+                    } else if (score >= 50) {
+                        scoreBar.style.backgroundColor = 'var(--color-secondary)'; // Blue
+                        scoreMessage.textContent = 'Cukup bagus! Hanya perlu penyesuaian keyword agar lebih kompetitif. Lihat rekomendasi di bawah.';
+                    } else {
+                        scoreBar.style.backgroundColor = '#EF4444'; // Red
+                        scoreMessage.textContent = 'Waspada! Score di bawah rata-rata. Anda harus segera merevisi CV agar lolos saringan awal.';
+                    }
+                    
+                    // Feedback Display
+                    aiFeedback.innerHTML = feedback;
+
+                } catch (error) {
+                    console.error('Analysis Error:', error);
+                    resultSection.classList.remove('hidden');
+                    aiFeedback.innerHTML = createFeedbackCard('❌', 'Error Analisis', 'Terjadi kesalahan saat menganalisis. Pastikan format teks yang dimasukkan benar.', 'bg-red-50', 'border-red-500', 'text-red-700');
+                } finally {
+                    // Reset loading state
+                    analyzeButton.disabled = false;
+                    buttonText.classList.remove('hidden');
+                    loadingSpinner.classList.add('hidden');
+                }
+            }, 2000);
+        };
+        
+        // --- Mock Data and Initialization ---
+
+        const loadMockData = () => {
+            cvInput.value = `
+            Nama: Budi Santoso
+            Pendidikan: S1 Teknik Informatika, Universitas A (Lulus 2024)
+            Pengalaman: 
+            Magang di TechCorp (6 bulan). Saya bertanggung jawab atas laporan data harian dan membantu tim dalam pekerjaan.
+            Proyek Akhir: Membuat sistem informasi untuk manajemen inventaris. Menggunakan teknologi dasar seperti PHP dan MySQL.
+            Skill: Python (dasar), Microsoft Office, Komunikasi (baik). Saya tahu tentang data analytics.
+            `;
+            checkInputs();
+        };
+        
+        const loadMockJD = () => {
+            jdInput.value = `
+            Posisi: Junior Data Analyst
+            Kami mencari fresh graduate yang bersemangat untuk menganalisis data besar.
+            Tanggung Jawab Utama:
+            - Melakukan analisis data kualitatif dan kuantitatif.
+            - Mengembangkan dan memelihara dashboard di Tableau atau Power BI.
+            - Menguasai Python dan SQL untuk query data kompleks.
+            - Memberikan rekomendasi strategis berdasarkan temuan data.
+            Kualifikasi:
+            - Gelar di bidang Ilmu Komputer, Statistika, atau setara.
+            - Kemampuan berpikir kritis dan memecahkan masalah.
+            - Pengalaman proyek dalam data science atau data analytics adalah nilai tambah.
+            `;
+            checkInputs();
+        };
+
+        const checkInputs = () => {
+            const isReady = cvInput.value.trim().length > 0 && jdInput.value.trim().length > 0;
+            analyzeButton.disabled = !isReady;
+        };
+
+        // Attach event listeners to check input status
+        cvInput.addEventListener('input', checkInputs);
+        jdInput.addEventListener('input', checkInputs);
+
+        // Load mock data on initial load for demonstration purposes
+        window.onload = function() {
+            loadMockData();
+            loadMockJD();
+        };
+    </script>
+</body>
+</html>
