@@ -56,7 +56,7 @@
         <!-- Header -->
         <header class="text-center mb-10">
             <h1 class="text-5xl font-extrabold text-gray-900 leading-tight">JobReady.<span class="text-emerald-500">ID</span></h1>
-            <p class="text-xl text-gray-500 mt-3 font-light">Perbaiki CV Anda Dengan Kami.</p>
+            <p class="text-xl text-gray-500 mt-3 font-light">Perbaiki CV kamu Dengan Kami.</p>
         </header>
 
         <!-- Main Content Grid -->
@@ -65,20 +65,19 @@
             <!-- CV Input Section -->
             <div class="input-card bg-gray-50 p-6 rounded-xl shadow-lg border border-gray-200">
                 <h2 class="text-xl font-bold mb-4 text-gray-700 flex items-center">
-                    <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    1. Konten CV Anda
+            
+                    Konten CV kamu
                 </h2>
-                <textarea id="cvInput" rows="12" class="w-full p-4 border-2 border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-inner" placeholder="Tempelkan seluruh teks CV Anda di sini."></textarea>
+                <textarea id="cvInput" rows="12" class="w-full p-4 border-2 border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base resize-none shadow-inner" placeholder="Tempelkan seluruh teks CV kamu di sini."></textarea>
                 <button onclick="loadMockData()" class="mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium transition duration-150">Gunakan Contoh Fresh Graduate</button>
             </div>
 
             <!-- Job Description Input Section -->
             <div class="input-card bg-gray-50 p-6 rounded-xl shadow-lg border border-gray-200">
                 <h2 class="text-xl font-bold mb-4 text-gray-700 flex items-center">
-                    <svg class="w-6 h-6 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 4v12l4-2.5 4 2.5V4m-4 0h-4m4 0h4m-4 4h-4m4 0h4m-4 4h-4m4 0h4"></path></svg>
-                    2. Deskripsi Lowongan (JD)
+                    Deskripsi Lowongan (JD)
                 </h2>
-                <textarea id="jdInput" rows="12" class="w-full p-4 border-2 border-emerald-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-base resize-none shadow-inner" placeholder="Tempelkan Deskripsi Lowongan (JD) yang Anda targetkan."></textarea>
+                <textarea id="jdInput" rows="12" class="w-full p-4 border-2 border-emerald-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-base resize-none shadow-inner" placeholder="Tempelkan Deskripsi Lowongan (JD) yang kamu targetkan."></textarea>
                 <button onclick="loadMockJD()" class="mt-3 text-sm text-emerald-600 hover:text-emerald-800 font-medium transition duration-150">Gunakan Contoh Lowongan (Data Analyst)</button>
             </div>
         </div>
@@ -112,7 +111,7 @@
                 <div class="w-full bg-gray-200 rounded-full overflow-hidden mt-6">
                     <div id="scoreBar" class="score-bar h-3.5" style="width: 0%;"></div>
                 </div>
-                <p class="mt-2 text-sm text-gray-500">Tingkat kecocokan keyword CV Anda terhadap target lowongan.</p>
+                <p class="mt-2 text-sm text-gray-500">Tingkat kecocokan keyword CV kamu terhadap target lowongan.</p>
             </div>
 
             <!-- AI Feedback & Optimization -->
@@ -146,7 +145,7 @@
         const buttonText = document.getElementById('buttonText');
         const loadingSpinner = document.getElementById('loadingSpinner');
 
-        // --- Gemini API Configuration ---
+        // --- API Configuration ---
         const apiKey = "AIzaSyCxsaTrltJ9eeDn3lVMPdnVowQjrhWiO58";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
@@ -201,7 +200,7 @@
             resultSection.classList.add('hidden');
             aiFeedback.innerHTML = '';
 
-            const systemPrompt = `Anda adalah Analis CV Ahli (ATS Optimizer) yang membantu fresh graduate Indonesia. Tugas Anda adalah membandingkan konten CV dengan deskripsi lowongan kerja (JD) dan memberikan skor kecocokan serta umpan balik yang sangat spesifik dan dapat ditindaklanjuti. Jawablah hanya dalam format JSON yang telah ditentukan. Gunakan Bahasa Indonesia.`;
+            const systemPrompt = `kamu adalah Analis CV Ahli (ATS Optimizer) yang membantu fresh graduate Indonesia. Tugas kamu adalah membandingkan konten CV dengan deskripsi lowongan kerja (JD) dan memberikan skor kecocokan serta umpan balik yang sangat spesifik dan dapat ditindaklanjuti. Jawablah hanya dalam format JSON yang telah ditentukan. Gunakan Bahasa Indonesia.`;
             
             const userQuery = `Analisis CV berikut terhadap Deskripsi Lowongan:
 
@@ -306,7 +305,7 @@
                     aiFeedback.innerHTML = feedbackHTML;
 
                 } else {
-                    aiFeedback.innerHTML = createFeedbackCard('❌', 'Respons Kosong', 'AI gagal memberikan respons. Coba format CV dan JD Anda lebih sederhana.', 'error');
+                    aiFeedback.innerHTML = createFeedbackCard('❌', 'Respons Kosong', 'AI gagal memberikan respons. Coba format CV dan JD kamu lebih sederhana.', 'error');
                 }
 
             } catch (error) {
